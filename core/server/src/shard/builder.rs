@@ -18,7 +18,7 @@
 
 use super::{
     IggyShard, TaskRegistry, transmission::connector::ShardConnector,
-    transmission::frame::ShardFrame, transmission::id::ShardId,
+    transmission::frame::ShardFrame,
 };
 use crate::{
     configs::server::ServerConfig,
@@ -33,13 +33,14 @@ use crate::{
 };
 use dashmap::DashMap;
 use iggy_common::EncryptorKind;
+use iggy_common::sharding::ShardLocation;
 use std::{cell::Cell, rc::Rc, sync::atomic::AtomicBool};
 
 #[derive(Default)]
 pub struct IggyShardBuilder {
     id: Option<u16>,
     streams: Option<Streams>,
-    shards_table: Option<EternalPtr<DashMap<IggyNamespace, ShardId>>>,
+    shards_table: Option<EternalPtr<DashMap<IggyNamespace, ShardLocation>>>,
     state: Option<FileState>,
     users: Option<Users>,
     client_manager: Option<ClientManager>,
@@ -69,7 +70,7 @@ impl IggyShardBuilder {
 
     pub fn shards_table(
         mut self,
-        shards_table: EternalPtr<DashMap<IggyNamespace, ShardId>>,
+        shards_table: EternalPtr<DashMap<IggyNamespace, ShardLocation>>,
     ) -> Self {
         self.shards_table = Some(shards_table);
         self

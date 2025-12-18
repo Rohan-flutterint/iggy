@@ -52,6 +52,7 @@ use crate::{
 };
 use builder::IggyShardBuilder;
 use dashmap::DashMap;
+use iggy_common::sharding::ShardLocation;
 use iggy_common::{EncryptorKind, Identifier, IggyError};
 use std::{
     cell::{Cell, RefCell},
@@ -61,10 +62,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tracing::{debug, error, info, instrument};
-use transmission::{
-    connector::{Receiver, ShardConnector, StopReceiver},
-    id::ShardId,
-};
+use transmission::connector::{Receiver, ShardConnector, StopReceiver};
 
 pub const COMPONENT: &str = "SHARD";
 pub const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(10);
@@ -76,7 +74,7 @@ pub struct IggyShard {
     _version: SemanticVersion,
 
     pub(crate) streams: Streams,
-    pub(crate) shards_table: EternalPtr<DashMap<IggyNamespace, ShardId>>,
+    pub(crate) shards_table: EternalPtr<DashMap<IggyNamespace, ShardLocation>>,
     pub(crate) state: FileState,
 
     pub(crate) fs_locks: FsLocks,
@@ -196,9 +194,9 @@ impl IggyShard {
     async fn load_segments(&self) -> Result<(), IggyError> {
         use crate::bootstrap::load_segments;
         for shard_entry in self.shards_table.iter() {
-            let (namespace, shard_id) = shard_entry.pair();
+            let (namespace, location) = shard_entry.pair();
 
-            if **shard_id == self.id {
+            if *location.shard_id == self.id {
                 let stream_id = namespace.stream_id();
                 let topic_id: usize = namespace.topic_id();
                 let partition_id = namespace.partition_id();

@@ -1,5 +1,4 @@
 /* Licensed to the Apache Software Foundation (ASF) under one
- * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -17,28 +16,5 @@
  * under the License.
  */
 
-use std::ops::Deref;
-
-// TODO: Maybe pad to cache line size?
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct ShardId {
-    id: u16,
-}
-
-impl ShardId {
-    pub fn new(id: u16) -> Self {
-        Self { id }
-    }
-
-    pub fn id(&self) -> u16 {
-        self.id
-    }
-}
-
-impl Deref for ShardId {
-    type Target = u16;
-
-    fn deref(&self) -> &Self::Target {
-        &self.id
-    }
-}
+// Re-export from common for backward compatibility
+pub use iggy_common::sharding::ShardId;

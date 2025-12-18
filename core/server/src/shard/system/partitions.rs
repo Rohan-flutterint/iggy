@@ -35,6 +35,7 @@ use crate::streaming::topics;
 use err_trail::ErrContext;
 use iggy_common::Identifier;
 use iggy_common::IggyError;
+use iggy_common::sharding::{LocalIdx, ShardLocation};
 use tracing::info;
 
 impl IggyShard {
@@ -105,7 +106,9 @@ impl IggyShard {
             let ns = IggyNamespace::new(numeric_stream_id, numeric_topic_id, partition_id);
             let shard_id = ShardId::new(calculate_shard_assignment(&ns, shards_count));
             let is_current_shard = self.id == *shard_id;
-            self.insert_shard_table_record(ns, shard_id);
+            // LocalIdx is a placeholder until IggyPartitions integration
+            let location = ShardLocation::new(shard_id, LocalIdx::new(0));
+            self.insert_shard_table_record(ns, location);
 
             create_partition_file_hierarchy(
                 numeric_stream_id as usize,
@@ -204,11 +207,12 @@ impl IggyShard {
                 "create_partitions_bypass_auth: partition mismatch ID, wrong creation order ?!"
             );
             let ns = IggyNamespace::new(numeric_stream_id, numeric_topic_id, id);
-            let shard_id = self.find_shard_table_record(&ns).unwrap_or_else(|| {
+            let location = self.find_shard_table_record(&ns).unwrap_or_else(|| {
                 tracing::warn!("WARNING: missing shard table record for namespace: {:?}, in the event handler for `CreatedPartitions` event.", ns);
-                ShardId::new(calculate_shard_assignment(&ns, shards_count))
+                let shard_id = ShardId::new(calculate_shard_assignment(&ns, shards_count));
+                ShardLocation::new(shard_id, LocalIdx::new(0))
             });
-            if self.id == *shard_id {
+            if self.id == *location.shard_id {
                 self.init_log(stream_id, topic_id, id).await?;
             }
         }
